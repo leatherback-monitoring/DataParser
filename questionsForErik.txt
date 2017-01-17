@@ -1,0 +1,10 @@
+Questions for Erik:
+
+-Why do we need a Raspberry Pi as an intermediary for this? Why can't we just connect to a computer?
+ no, but it would be helpful.
+-How do you get data? Like if I want to experiment by playing around with a light sensor, how do I do that? Can it read analog?
+-What does time synchronization mean? Is it that we're getting absolute values from when the sensor is turned on?
+-What format are we going to be getting data in? Same as the DHT? (I probably can figure this out, especially if you upload what you've got so far)
+-How do we want to display the data? I think the best idea would be as soon as it's plugged in, automatically upload to a server and then use D3 to display the data. Thoughts?
+
+How are we logging time? Millis has rollover issues, iterating time = time + 1 will be innacurate (1ms per second off)

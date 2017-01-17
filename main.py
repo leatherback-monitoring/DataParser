@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+
+#adapted from https://github.com/widakay/QuadcopterDataParser
+
+
 import time
 import os
 import sys
@@ -29,7 +33,7 @@ if not os.path.exists(directory):
 filename = directory + "/data.txt"
 
 
-print "openning", filename
+print "opening", filename
 
 port = serInput.findPort()
 
@@ -66,173 +70,54 @@ print fileshort
 
 sensorNames = {
 	0:"time",
-	1:"GPS",
-	2:"pressure",
-	3:"LP",
-	4:"PPM",
-	5:"temperature",
-	6:"imu",
-	7:"DHT"
+	1:"HTU"
 }
-kmldir = directory+"/kml/"
-csvdir = directory+"/csv/"
-webdir = directory+"/web/"
 
-if not os.path.exists(kmldir):
-	os.mkdir(kmldir)
+	# Measure the relative humidity
+	#uint16_t RH_Code = makeMeasurment(HUMD_MEASURE_NOHOLD);
+	#result = (125.0*RH_Code/65536)-6
+
+	#Measure temperature
+	#uint16_t temp_Code = makeMeasurment(TEMP_MEASURE_NOHOLD);
+	#result = (175.25*temp_Code/65536)-46.85
+
+csvdir = directory+"/csv/"
+
+
 if not os.path.exists(csvdir):
 	os.mkdir(csvdir)
-if not os.path.exists(webdir):
-	os.mkdir(webdir)
 
-pos = open(csvdir+sensorNames[1]+".csv", "w")
-pos.write("Time,Lat,Lon,Alt\n")
-
-lp = open(csvdir+sensorNames[3]+".csv", "w")
-lp.write("Time,heater,voltage\n")
-
-ppm = open(csvdir+sensorNames[4]+".csv", "w")
-ppm.write("Time,voltage,ppm\n")
-
-prs = open(csvdir+sensorNames[2]+".csv", "w")
-prs.write("Time,pressure,temperature\n")
-
-imu = open(csvdir+sensorNames[6]+".csv", "w")
-imu.write("Time,prs,ax,ay,az,gx,gy,gz,mx,my,mz\n")
-
-dht = open(csvdir+sensorNames[7]+".csv", "w")
-dht.write("Time,temperature (C),humidity\n")
+htu = open(csvdir+sensorNames[0]+".csv", "w")
+htu.write("Time,temperature (C),humidity\n")
 
 combined = open(csvdir+"combined.csv", "w")
-combined.write("Time(ms),temperature,pressure,LP,LPState,PPM\n")
+combined.write("Time(ms),temperature, humidity\n")
 
+csvdir = directory+"/csv/"
 
+if not os.path.exists(csvdir):
+	os.mkdir(csvdir)
 
-posVec = [0,0,0]
-data = []
-
-lastPressure = 0
 lastTemp = 0
 lastHumidity = 0
-lastPPM = 0
-lastLP = 0
-lastLPState = 0
-
 
 startTime = datetime.datetime.now()
 lasttime = 0
-
+ 
 def logCombined():
-	combined.write(str(parser.millis) + "," + str(lastTemp) + "," + str(lastPressure) + "," + str(lastLP) + "," + str(lastLPState) + "," + str(lastPPM) + '\n')
+	combined.write(str(parser.millis) + "," + str(lastTemp) + "," + str(lastHumidity) + '\n')
 
 i=0
 for line in log.readlines():
 	line = line.strip()
 	i += 1
-	for name, parser in parserList.iteritems():
-
+	for name, parser in parserList.iteritems():    
 		if parser.parse(line):
-			#print parser.type.ljust(6) + ": " + line
-			if parser.type == "PRS":
-				lastPressure = parser.pressure
-				#lastTemp = m[2]
-				prs.write(str(parser))
-			elif parser.type == "PPM":
-				lastPPM = parser.PPM
-				ppm.write(str(parser))
-			elif parser.type == "LP":
-				lastLP = parser.LP
-				lastLPState = parser.LPState
-				lp.write(str(parser))
-			elif parser.type == "DHT":
+			if parser.type == "HTU":
 				lastTemp = parser.temperature
 				lastHumidity = parser.humidity
-				dht.write(str(parser))
-			elif parser.type == "GPS":
-				if parser.alt < 300:
-					if lastPressure != 0 and lastLP != 0 and lastPPM != 0 and i>100:
-						data.append([parser.time, (parser.lat, parser.lon, parser.alt), lastPressure, lastLP, lastPPM, lastTemp, lastHumidity])
-					else:
-						print "discarding data point"
-						print [parser.time, (parser.lat, parser.lon, parser.alt), lastPressure, lastLP, lastPPM, lastTemp, lastHumidity]
-				pos.write(str(parser))
+				htu.write(str(parser))
 				logCombined()
 			else:
 				print "error parsing: " + line
 
-if data:
-	print data[0]
-
-else:
-	sys.exit("no GPS points to attatch data to")
-
-
-def createKML(sensorID):
-	kml = simplekml.Kml()
-	chartval = sensorID
-	minimum = min(data,key=lambda item:item[chartval])[chartval]
-	maximum = max(data,key=lambda item:item[chartval])[chartval]
-	if sensorID == 2:
-		maximum = 0.15
-
-	if maximum-minimum != 0:
-		print sensorID, maximum, minimum, (data[0][chartval]-minimum)*(255.0/(maximum-minimum))
-
-	for i in xrange(len(data)-2):
-		linestring = kml.newlinestring()
-		linestring.coords = [data[i][1],data[i+1][1]]
-		if maximum-minimum != 0:
-			color = (data[i][chartval]-minimum)*(255.0/(maximum-minimum))
-		else:
-			color = 0
-		r = color
-		g = 255-color
-		b = 255
-		linestring.style.linestyle.color = "aa%02x%02x%02x" % (b,g,r)
-		linestring.altitudemode = simplekml.AltitudeMode.absolute
-		#linestring.altitudemode = simplekml.AltitudeMode.clamptoground
-		linestring.style.linestyle.width = 10
-
-	kml.save(kmldir+sensorNames[sensorID]+".kml")
-
-
-
-for i in range(2,6):
-	createKML(i)
-
-def createJSON():
-	if data:
-		maxmin = {}
-		for i in range(2,6):
-			minimum = min(data,key=lambda item:item[i])[i]
-			maximum = max(data,key=lambda item:item[i])[i]
-			maxmin[sensorNames[i]] = [minimum,maximum]
-			
-
-		jsondata = {
-			"offset": [0-data[0][1][0], 0-data[0][1][1], 0-data[0][1][2]],
-			"rotation": [0,0,0],
-			"scale": 50000,
-			"maxmin": maxmin,
-			"data" : []
-		}
-
-		"""
-		var scale = data["scale"];      // 50000
-		var offset = data["offset"];    // [122.2787, 37.46244, 220]
-		var rotation = data["rotation"];
-		"""
-
-		for v in data:
-			#print v
-			datapoint = {"pos":v[1]}
-			for i in range(2,6):
-				datapoint[sensorNames[i]] = v[i]
-			jsondata["data"].append(datapoint)
-
-		#print json.dumps(jsondata)
-
-		with open(webdir+'data.json', 'w') as outfile:
-			json.dump(jsondata, outfile)
-
-createJSON()

@@ -1,9 +1,11 @@
+
 #!/usr/bin/env python
 
 import time, serial, glob, sys, os
 
 
 def listSerialPorts():
+
 	if sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
 		# this is to exclude your current terminal "/dev/tty"
 		ports = glob.glob('/dev/tty[A-Za-z]*')
@@ -25,6 +27,7 @@ def listSerialPorts():
 				s.close()
 				result.append(port)
 			except (OSError, serial.SerialException):
+				print "OSError"
 				pass
 
 	print "found ports:", ports, "using port:", result
@@ -52,6 +55,17 @@ def readInput(port, deleteData=True):
 			stopbits=serial.STOPBITS_TWO,
 			bytesize=serial.SEVENBITS
 		)
+
+
+		if ser.isOpen():
+			print "Port already open..."
+		else:
+			print "Opening port..."
+			ser.open()
+
+
+		ser.flush()
+
 
 		# double-check that the serial port can be connected to and buffers are empty
 		# by continuing when the port is already open, this fixes some bugs on Mac OS X, but may cause problems

@@ -1,11 +1,10 @@
 import re, datetime, utils.parser
-
-
+from time import ctime
 
 class Parser:
-	regex = re.compile(r'#DHT:(\d+),([-+]?\d+\.\d+),([-+]?\d+\.\d+)')
+	regex = re.compile(r'#HTU:(\d+),([-+]?\d+\.\d+),([-+]?\d+\.\d+)')
 	def __init__(self):
-		self.type = "DHT"
+		self.type = "HTU"
 		self.millis = -1
 		self.temperature = -1
 		self.humidity = -1
@@ -25,4 +24,4 @@ class Parser:
 if __name__ == "__main__":
 	parser = Parser()
 	print parser.parse("hi")
-	print parser.parse("#DHT:3412302,15.40,59.60")
+	print parser.parse("#HTU:3412302,15.40,59.60")
