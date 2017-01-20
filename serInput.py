@@ -57,14 +57,7 @@ def readInput(port, deleteData=True):
 		)
 
 
-		if ser.isOpen():
-			print "Port already open..."
-		else:
-			print "Opening port..."
-			ser.open()
 
-
-		ser.flush()
 
 
 		# double-check that the serial port can be connected to and buffers are empty
@@ -73,26 +66,28 @@ def readInput(port, deleteData=True):
 		if ser.isOpen():
 			print "Port already open..."
 		else:
-			print "Openning port..."
+			print "Opening port..."
 			ser.open()
-		ser.flush()
 
-		# Send read command
+		ser.flush()
+ 		# Send read command
 		ser.write("r")
 
-		end = time.time() + 2
+		end = time.time() + 4
 		print "reading data...."
 		
 		data = ""
-		# Continuously read data until sensor has not replied for 2 seconds
+		# Continuously read data until sensor has not replied for 4 seconds
 		while time.time() < end:
 			while ser.inWaiting():
+
 				addition = ser.read(ser.inWaiting())
 				data += addition
 				print 'Receieved \t' + str(len(addition)) + " bytes"
-				end = time.time() + 2.0
+				end = time.time() + 4
 			time.sleep(0.5)
-		#print data
+		print data
+
 		if deleteData:
 			print "Erasing data on device..."
 			ser.write("d")

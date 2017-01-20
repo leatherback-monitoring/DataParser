@@ -1,0 +1,4 @@
+Time is 45
+awake
+0
+sleeping...

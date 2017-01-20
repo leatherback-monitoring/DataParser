@@ -1,0 +1,42 @@
+Time is 44
+awake
+A
+22044Reading sensor
+22081doner
+r: 44, 24.3,38.2
+writing memory
+donew
+S
+sleeping... wake up at 48. now is 44
+4
+sleeping...
+Time is 52
+awake
+A
+22329Reading sensor
+22364doner
+r: 52, 24.3,38.4
+writing memory
+donew
+S
+sleeping... wake up at 56. now is 52
+4
+sleeping...
+Time is 53
+awake
+0
+sleeping...
+Time is 63
+awake
+0
+sleeping...
+tarting
+170RUNNING
+Waiting for computer connection...
+Time is 33
+awake
+0
+sleeping...
+Starting
+170RUNNING
+Waiting for computer connection...

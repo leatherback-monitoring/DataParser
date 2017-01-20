@@ -1,0 +1,12 @@
+Time is 96
+awake
+A
+16607Reading sensor
+16644doner
+r: 96, 21.6,44.9
+writing memory
+donew
+S
+sleeping... wake up at 100. now is 96
+4
+sleeping...

@@ -19,7 +19,20 @@ import json
 from operator import itemgetter
 
 
-directory = "data/parkoct18/" + "park-try2" #+ str(int(time.time()))
+
+def getSensorID():
+	sensorID = raw_input("enter the sensor ID: ")
+	try:
+		int(sensorID)
+	except ValueError:
+		print "%s is not a number. Please try again" %sensorID 
+		getSensorID()
+	else:
+		print "sensor ID validated: %d" % int(sensorID)
+		return sensorID
+
+
+directory = "data/sensors/" + getSensorID() #+ "/"  + str(int(time.time()))
 #directory = "data/" + "lowPressure" #+ str(int(time.time()))
 #directory = "data/oregon/" + "baseline"
 
