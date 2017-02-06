@@ -22,6 +22,10 @@ with open("timetest.txt","r") as f:
 	# read a list of lines into data
 	_data = f.readlines()
 
+print _data
+#userStartDate = raw_input("please enter the time at which the sensor was turned on, in the format Month-Day-Year Hour:Minute AM/PM")
+
+#userStartDateFormatted = datetime.strptime(userStartDate, time.format("%m-%d-%Y %H:%M"))
 
 def parseTime(milliseconds):
 	second, milliseconds = divmod(milliseconds, 1000)
@@ -41,6 +45,7 @@ count = 0
 seconds = 0
 
 for i in _data:
+
 	#converts minutes to seconds
 	if int(i) > 1000:
 		i = str(int(i)/1000)
