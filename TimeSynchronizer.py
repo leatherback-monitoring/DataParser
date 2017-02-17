@@ -1,68 +1,132 @@
 import time, datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 import csv
 import calendar
-import pandas
+import pandas as pd
+import numpy.random as random
+import sys
 
-fi = open("data.csv")
-csv_data = csv.reader(fi)
+data = pd.read_csv("data.csv")
 
-data = []
-for i in csv_data:
-	#if i > 0:
-	print i[0]
-		#print all times
-		#with open("timetest.txt", "w") as writefile:
-		#if row[0] < row[i-1]:
-		#	print row[i] + row[i-1]
-		#else:
-		#print row[i]
-
-with open("timetest.txt","r") as f:
-	# read a list of lines into data
-	_data = f.readlines()
-
-print _data
-#userStartDate = raw_input("please enter the time at which the sensor was turned on, in the format Month-Day-Year Hour:Minute AM/PM")
-
-#userStartDateFormatted = datetime.strptime(userStartDate, time.format("%m-%d-%Y %H:%M"))
-
-def parseTime(milliseconds):
-	second, milliseconds = divmod(milliseconds, 1000)
-	minute, second = divmod(second, 60)
-	hour, minute = divmod(minute, 60)
-	day, hour = divmod(hour, 24)
-	month = time.gmtime()[1] - milliseconds
-	year = time.gmtime()[0] - milliseconds
-	return datetime.datetime(year=year, month=month, day=day, hour=hour, minute=minute, second=second)
-print str(time.strftime('%Y %m months %d days %H:%M:%S', time.gmtime()))
-
-#parseTime(1966)
-#newformat = time.format("%Y-%m-%d %H:%M")
-# now change the 2nd line, note that you have to add a newline
-lastTime = 0
-count = 0
-seconds = 0
-
-for i in _data:
-
-	#converts minutes to seconds
-	if int(i) > 1000:
-		i = str(int(i)/1000)
-		_data[count] = i+"\n"
-		if int(i) < lastTime:
-			newTime = 1 + lastTime
-			
-			_data[count] = str(newTime) + "\n"
-			lastTime = newTime
-		else:
-			lastTime = int(i)
-	count+=1
-
-seconds = timedelta(seconds=int(_data[len(_data)-1]))
-startDate = datetime.datetime.now() - seconds
-print startDate
+#multiply to get time in seconds
+data['time'] = data['time']*8
 	
-# and write everything back
-with open("timetest.txt","w") as f:
-	f.writelines(_data)
+
+#for i in data['time']:
+    #print Index(data['time'],i.get_loc()
+timeSeries = list(data['time'])
+
+for i in range(0,len(timeSeries)):
+        if i > 0:
+            if timeSeries[i] < timeSeries[i-1]:
+                #recursively edit overflow
+                timeSeries[i] = timeSeries[i-1] + 8
+                print "edited due to overflow or reset at row " + str(i)
+
+#write data back into dataframe
+data['time'] = timeSeries
+
+def singleSync(series):
+    #obtain how many seconds elapsed 
+    lastReading = data[series][len(data)-1]
+
+    calculatedStartDate = datetime.now()- timedelta(seconds=int(lastReading))
+    #load times as timedelta
+    timedeltas = pd.to_timedelta(data[series],unit='s')
+    columnName = str('realtime - ' + series)
+    #adjust in time since epoch the starting time of the loggings
+    data[columnName] = calculatedStartDate + timedeltas
+
+    #time string formatting
+    data[columnName] = pd.Series(pd.DatetimeIndex(data[columnName]).strftime('%X %D'))
+    
+singleSync('time')
+#generate some noise
+def noise():
+    return random.randint(-2,2) * random.rand()
+
+timeSeries = list(data['time'])
+#generate a fake user-inputted start date with some error built-in (for testing time correction purposes only
+
+for i in range (0,len(timeSeries)):
+        #if i == 0:
+         #       timeSeries[i] = timeSeries[i] + noise()
+        if i > 0:
+                timeSeries[i] = timeSeries[i-1] + 8 + noise()
+
+data['noisytime'] = timeSeries
+
+singleSync('noisytime')
+data.head()    
+
+def getUserStartDate():
+    while True:
+        #userIn = raw_input("Type Date: mm/dd/yy: ")
+        userDateInput = raw_input("enter the day the sensor was turned on and placed in the nest as mm/dd/yyyy ")
+        try:
+            date = datetime.strptime(userDateInput, "%m/%d/%Y")
+        except ValueError as e:
+            print "Invalid Format: {0}".format(e)
+        else:
+        	return date
+        	print date
+
+
+def getUserStartTime():
+    while True:
+        #do the biologists use 24hr time?
+        userTimeInput = raw_input("enter the time the sensor was turned on and placed in the nest as 24-Hour time in the format hr:min (e.x. 16:32): ")
+        try:
+            time = datetime.strptime(userTimeInput + ":00", "%X")
+            time = timedelta(hours=time.hour, minutes=time.minute, seconds=0)
+        except ValueError as e:
+            print "Invalid Format: {0}".format(e)
+    	else:
+    		return time
+    		print time
+#from http://code.activestate.com/recipes/577058/
+def query_yes_no(question, default="yes"):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = raw_input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
+
+def getUserStartDateTime():
+	userStartDateTime = getUserStartDate() + getUserStartTime()
+	print "your date is: " + str(userStartDateTime)
+
+def valiDate():
+	userStartDateTime = getUserStartDate() + getUserStartTime()
+	print "your date is: " + str(userStartDateTime)
+	userVerify = query_yes_no("is this correct? ")
+	if userVerify == False:
+		valiDate()
+	if userVerify == True:
+		return
+valiDate()
