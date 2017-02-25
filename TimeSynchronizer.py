@@ -117,10 +117,7 @@ def query_yes_no(question, default="yes"):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
-def getUserStartDateTime():
-	userStartDateTime = getUserStartDate() + getUserStartTime()
-	print "your date is: " + str(userStartDateTime)
-
+userStartDateTime = ""
 def valiDate():
 	userStartDateTime = getUserStartDate() + getUserStartTime()
 	print "your date is: " + str(userStartDateTime)
@@ -128,5 +125,17 @@ def valiDate():
 	if userVerify == False:
 		valiDate()
 	if userVerify == True:
-		return
+		return "synchronizing time now..."
+		#return userStartDateTime
 valiDate()
+
+
+#if the user start date doesn't match the singleSync start date, do I adjust by taking the
+#currentTime - userStartTime / number of readings (not preserving 8-sec logging) or by doing
+#userStartTime + 8n?
+
+#% will adjust syncing approach based on the percentage off the data is.
+tolerance = 10
+
+if userStartDateTime - data['realtime - noisytime'][0] !=0:
+	print "sync time off!"
