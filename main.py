@@ -8,17 +8,13 @@ import time
 import os
 import sys
 import datetime
-import struct
-import parsers
+#import struct
+#import parsers
 import serInput
-import inspect
-import simplekml
-import types
-import json
+#import types
+#import json
 
 from operator import itemgetter
-
-
 
 def getSensorID():
 	sensorID = raw_input("enter the sensor ID: ")
@@ -26,13 +22,13 @@ def getSensorID():
 		int(sensorID)
 	except ValueError:
 		print "%s is not a number. Please try again" %sensorID 
-		getSensorID()
+		return getSensorID()
 	else:
 		print "sensor ID validated: %d" % int(sensorID)
 		return sensorID
 
 
-directory = "data/sensors/" + getSensorID() #+ "/"  + str(int(time.time()))
+directory = "turtleSensorData/sensors/" + getSensorID() #+ "/"  + str(int(time.time()))
 #directory = "data/" + "lowPressure" #+ str(int(time.time()))
 #directory = "data/oregon/" + "baseline"
 
@@ -56,7 +52,7 @@ if port:
 else:
 	print "using cached data"
 dataFile.close()
-
+'''
 parserList = {}
 for name, module in parsers.__dict__.iteritems():
 	if type(module) is types.ModuleType:
@@ -65,7 +61,7 @@ for name, module in parsers.__dict__.iteritems():
 				if name2 == "Parser":
 					print "adding parser:", name
 					parserList[name] = parser()
-
+'''
 # 	GPS example:
 #		#GPS:2136,12,37.462688,-122.274070,229.20,9,114
 #		$GPS:1651585,f:E6D91542,f:488CF4C2,f:00000041,f:00000043:#
@@ -73,7 +69,7 @@ for name, module in parsers.__dict__.iteritems():
 #	IMU example:
 #		#IMU:343808,25.31,-7,-7,-7,-55,118,29,956,0,16736:#
 
-parsers.testParsers(parserList)
+#parsers.testParsers(parserList)
 
 
 log = open(filename, "r")
@@ -113,9 +109,6 @@ if not os.path.exists(csvdir):
 
 lastTemp = 0
 lastHumidity = 0
-
-startTime = datetime.datetime.now()
-lasttime = 0
  
 def logCombined():
 	combined.write(str(parser.millis) + "," + str(lastTemp) + "," + str(lastHumidity) + '\n')
@@ -133,4 +126,5 @@ for line in log.readlines():
 				logCombined()
 			else:
 				print "error parsing: " + line
+
 

@@ -1,10 +1,11 @@
-import time, datetime
+import time
 from datetime import datetime, timedelta
 import csv
-import calendar
 import pandas as pd
 import numpy.random as random
 import sys
+
+sys.setrecursionlimit(20000)
 
 data = pd.read_csv("data.csv")
 
