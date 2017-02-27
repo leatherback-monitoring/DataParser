@@ -1,4 +1,0 @@
-Time is 35
-awake
-0
-sleeping...

@@ -21,16 +21,15 @@ def listSerialPorts():
 
 	result = []
 	for port in ports:
-		if "usb" in port:
-			try:
-				s = serial.Serial(port)
-				s.close()
-				result.append(port)
-			except (OSError, serial.SerialException):
-				print "OSError"
-				pass
+		try:
+			s = serial.Serial(port)
+			s.close()
+			result.append(port)
+		except (OSError, serial.SerialException):
+			print "OSError"
+			pass
 
-	print "found ports:", ports, "using port:", result
+	print "discovered ports:", ports, "possible ports:", result
 	return result
 
 class UnknownSerialPortException(Exception):
@@ -38,12 +37,18 @@ class UnknownSerialPortException(Exception):
 
 def findPort():
 	serialPorts = listSerialPorts()
+
+	# *-nix
+	if not sys.platform.startswith('win'):
+		serialPorts = [port for port in serialPorts if "usb" in port]
+
 	if len(serialPorts) > 0:
 		port = serialPorts[0]
+		print "using port", port
 		return port
 	return
 
-def readInput(port, deleteData=True):
+def readInput(port, deleteData=True, ser_timeout=4):
 	if not os.path.exists(port):
 		raise UnknownSerialPortException("Port " + port + " does not exist")
 	else:
@@ -51,46 +56,45 @@ def readInput(port, deleteData=True):
 		ser = serial.Serial(
 			port=port,
 			baudrate=115200,
-			parity=serial.PARITY_ODD,
-			stopbits=serial.STOPBITS_TWO,
-			bytesize=serial.SEVENBITS
+			parity=serial.PARITY_NONE,
+			stopbits=serial.STOPBITS_ONE,
+			bytesize=serial.EIGHTBITS
 		)
-
-
-
-
 
 		# double-check that the serial port can be connected to and buffers are empty
 		# by continuing when the port is already open, this fixes some bugs on Mac OS X, but may cause problems
 		# if another process has control the serial port
 		if ser.isOpen():
-			print "Port already open..."
+			print "Port already open... If the download fails, try plugging in the sensor again"
 		else:
 			print "Opening port..."
 			ser.open()
 
 		ser.flush()
- 		# Send read command
-		ser.write("r")
 
-		end = time.time() + 4
+ 		
+		end = time.time() + ser_timeout
 		print "reading data...."
 		
 		data = ""
 		# Continuously read data until sensor has not replied for 4 seconds
 		while time.time() < end:
 			while ser.inWaiting():
-
-				addition = ser.read(ser.inWaiting())
-				data += addition
-				print 'Receieved \t' + str(len(addition)) + " bytes"
-				end = time.time() + 4
+				waiting = ser.inWaiting()
+				data += ser.read(waiting)
+				print 'Receieved \t' + str(waiting) + " bytes"
+				if "Waiting" in data[-waiting:]:
+					ser.write("r")
+					print "Sensor booted. Fetching data..."
+				end = time.time() + ser_timeout
 			time.sleep(0.5)
+		print "-"*10 + " Data " + "-"*10
 		print data
+		print "-"*27
 
 		if deleteData:
 			print "Erasing data on device..."
-			ser.write("d")
+			ser.write("e")
 			print "Done."
 
 		ser.close()

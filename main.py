@@ -8,27 +8,31 @@ import time
 import os
 import sys
 import datetime
-#import struct
-#import parsers
+import struct
+import parsers
 import serInput
-#import types
-#import json
+import inspect
+import simplekml
+import types
+import json
 
 from operator import itemgetter
+
+
 
 def getSensorID():
 	sensorID = raw_input("enter the sensor ID: ")
 	try:
 		int(sensorID)
 	except ValueError:
-		print "%s is not a number. Please try again" %sensorID 
-		return getSensorID()
+		print "%s is not a number. Please try again" % sensorID 
+		getSensorID()
 	else:
 		print "sensor ID validated: %d" % int(sensorID)
 		return sensorID
 
-
-directory = "turtleSensorData/sensors/" + getSensorID() #+ "/"  + str(int(time.time()))
+sensorID = getSensorID()
+directory = "data/sensors/" + sensorID #+ "/"  + str(int(time.time()))
 #directory = "data/" + "lowPressure" #+ str(int(time.time()))
 #directory = "data/oregon/" + "baseline"
 
@@ -42,8 +46,10 @@ if not os.path.exists(directory):
 filename = directory + "/data.txt"
 
 
+
 print "opening", filename
 
+#TODO: do this first to cause errors before the user enters anything
 port = serInput.findPort()
 
 dataFile = open(filename, "a")
@@ -52,7 +58,7 @@ if port:
 else:
 	print "using cached data"
 dataFile.close()
-'''
+
 parserList = {}
 for name, module in parsers.__dict__.iteritems():
 	if type(module) is types.ModuleType:
@@ -61,7 +67,7 @@ for name, module in parsers.__dict__.iteritems():
 				if name2 == "Parser":
 					print "adding parser:", name
 					parserList[name] = parser()
-'''
+
 # 	GPS example:
 #		#GPS:2136,12,37.462688,-122.274070,229.20,9,114
 #		$GPS:1651585,f:E6D91542,f:488CF4C2,f:00000041,f:00000043:#
@@ -69,7 +75,7 @@ for name, module in parsers.__dict__.iteritems():
 #	IMU example:
 #		#IMU:343808,25.31,-7,-7,-7,-55,118,29,956,0,16736:#
 
-#parsers.testParsers(parserList)
+parsers.testParsers(parserList)
 
 
 log = open(filename, "r")
@@ -102,17 +108,19 @@ htu.write("Time,temperature (C),humidity\n")
 combined = open(csvdir+"combined.csv", "w")
 combined.write("Time(ms),temperature, humidity\n")
 
-csvdir = directory+"/csv/"
-
 if not os.path.exists(csvdir):
 	os.mkdir(csvdir)
 
 lastTemp = 0
 lastHumidity = 0
+
+startTime = datetime.datetime.now()
+lasttime = 0
  
 def logCombined():
 	combined.write(str(parser.millis) + "," + str(lastTemp) + "," + str(lastHumidity) + '\n')
 
+print "parsing"
 i=0
 for line in log.readlines():
 	line = line.strip()
@@ -124,7 +132,4 @@ for line in log.readlines():
 				lastHumidity = parser.humidity
 				htu.write(str(parser))
 				logCombined()
-			else:
-				print "error parsing: " + line
-
 
