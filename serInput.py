@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 
 import time, serial, glob, sys, os

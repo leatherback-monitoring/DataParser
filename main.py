@@ -7,18 +7,18 @@
 import time
 import os
 import sys
-import datetime
-import struct
+#import struct
 import parsers
+import pandas as pd
 import serInput
-import inspect
-import simplekml
+import timeSync
+import datetime
 import types
-import json
+#import json
 
 from operator import itemgetter
 
-
+sensorID = "NO_ID"
 
 def getSensorID():
 	sensorID = raw_input("enter the sensor ID: ")
@@ -26,15 +26,13 @@ def getSensorID():
 		int(sensorID)
 	except ValueError:
 		print "%s is not a number. Please try again" % sensorID 
-		getSensorID()
+		return getSensorID()
 	else:
 		print "sensor ID validated: %d" % int(sensorID)
 		return sensorID
 
 sensorID = getSensorID()
-directory = "data/sensors/" + sensorID #+ "/"  + str(int(time.time()))
-#directory = "data/" + "lowPressure" #+ str(int(time.time()))
-#directory = "data/oregon/" + "baseline"
+directory = os.path.join(os.path.expanduser('~\Documents'),  "turtleSensorData", "sensors", str(sensorID)) #+ "/"  + str(int(time.time()))
 
 
 if len(sys.argv) > 1:
@@ -43,16 +41,14 @@ if len(sys.argv) > 1:
 if not os.path.exists(directory):
 	os.makedirs(directory)
 
-filename = directory + "/data.txt"
+raw_data = os.path.join(directory, str(datetime.date.today()) + "-raw_data.txt")
 
-
-
-print "opening", filename
+print "opening", raw_data
 
 #TODO: do this first to cause errors before the user enters anything
 port = serInput.findPort()
 
-dataFile = open(filename, "a")
+dataFile = open(raw_data, "a")
 if port:
 	dataFile.write(serInput.readInput(port, deleteData=False))
 else:
@@ -78,8 +74,8 @@ for name, module in parsers.__dict__.iteritems():
 parsers.testParsers(parserList)
 
 
-log = open(filename, "r")
-fileshort = filename[:filename.find(".txt")]
+log = open(raw_data, "r")
+fileshort = raw_data[:raw_data.find(".txt")]
 print fileshort
 
 
@@ -96,7 +92,11 @@ sensorNames = {
 	#uint16_t temp_Code = makeMeasurment(TEMP_MEASURE_NOHOLD);
 	#result = (175.25*temp_Code/65536)-46.85
 
-csvdir = directory+"/csv/"
+csvpath = os.path.join(directory,  str(datetime.date.today()) + "-data.csv")
+#combined = open(csvpath, "w")
+#combined.write("Time(ms),temperature, humidity\n")
+
+csvdir = os.path.join(directory, "csv")
 
 
 if not os.path.exists(csvdir):
@@ -122,14 +122,40 @@ def logCombined():
 
 print "parsing"
 i=0
+
 for line in log.readlines():
 	line = line.strip()
 	i += 1
 	for name, parser in parserList.iteritems():    
 		if parser.parse(line):
 			if parser.type == "HTU":
+				print "logging"
 				lastTemp = parser.temperature
 				lastHumidity = parser.humidity
 				htu.write(str(parser))
 				logCombined()
 
+
+#time synchronization below:
+
+data = pd.read_csv(csvpath, names = ['time','temp','humidity'])
+
+#multiply to get time in seconds
+data['rawTime'] = data['time']*8
+
+timeSeries = list(data['rawTime'])
+
+timeSync.checkResetOverflow(timeSeries)
+
+#write data back into dataframe -- can be done better
+data['rawTime'] = timeSeries
+
+timeSync.singleSync(data, 'rawTime')
+
+
+timeSync.DoubleSync(data, 'realtime - rawTime')
+
+#clean up the data with the raw output, temp, humidity, and synchronized time only.
+cleanData = data[['rawTime','temp','humidity','syncedTime']]
+
+pd.DataFrame.to_csv(cleanData,path_or_buf=csvpath)
