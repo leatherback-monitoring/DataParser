@@ -3,3 +3,6 @@
 ._*
 *.pyc
 data/*
+dist/*
+build/*
+
