@@ -25,7 +25,7 @@ def getSensorID():
 	try:
 		int(sensorID)
 	except ValueError:
-		print "%s is not a number. Please try again" %sensorID 
+		print "%s is not a number. Please try again" % sensorID 
 		getSensorID()
 	else:
 		print "sensor ID validated: %d" % int(sensorID)
@@ -108,8 +108,6 @@ htu.write("Time,temperature (C),humidity\n")
 combined = open(csvdir+"combined.csv", "w")
 combined.write("Time(ms),temperature, humidity\n")
 
-csvdir = directory+"/csv/"
-
 if not os.path.exists(csvdir):
 	os.mkdir(csvdir)
 
@@ -122,6 +120,7 @@ lasttime = 0
 def logCombined():
 	combined.write(str(parser.millis) + "," + str(lastTemp) + "," + str(lastHumidity) + '\n')
 
+print "parsing"
 i=0
 for line in log.readlines():
 	line = line.strip()
@@ -133,6 +132,4 @@ for line in log.readlines():
 				lastHumidity = parser.humidity
 				htu.write(str(parser))
 				logCombined()
-			else:
-				print "error parsing: " + line
 

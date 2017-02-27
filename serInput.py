@@ -37,12 +37,13 @@ class UnknownSerialPortException(Exception):
 
 def findPort():
 	serialPorts = listSerialPorts()
+
+	# *-nix
+	if not sys.platform.startswith('win'):
+		serialPorts = [port for port in serialPorts if "usb" in port]
+
 	if len(serialPorts) > 0:
-		# *-nix
-		if not sys.platform.startswith('win'):
-			port = [port for port in serialPorts if "usb" in port][0]
-		else:	# windows
-			port = serialPorts[0]
+		port = serialPorts[0]
 		print "using port", port
 		return port
 	return
