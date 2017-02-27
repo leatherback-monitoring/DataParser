@@ -1,4 +1,0 @@
-Time is 26
-awake
-0
-sleeping...

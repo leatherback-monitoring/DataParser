@@ -7,13 +7,13 @@
 import time
 import os
 import sys
-import datetime
 #import struct
 import parsers
 import pandas as pd
 import serInput
 import timeSync
-#import types
+import datetime
+import types
 #import json
 
 from operator import itemgetter
@@ -32,8 +32,8 @@ def getSensorID():
 		return sensorID
 
 sensorID = getSensorID()
+directory = os.path.join(os.path.expanduser('~\Documents'),  "turtleSensorData", "sensors", str(sensorID)) #+ "/"  + str(int(time.time()))
 
-directory = os.path.join(os.path.expanduser('~\Documents'),  "turtleSensorData\\sensors", str(sensorID)) #+ "/"  + str(int(time.time()))
 
 if len(sys.argv) > 1:
 	directory = sys.argv[1]
@@ -45,6 +45,7 @@ raw_data = os.path.join(directory, str(datetime.date.today()) + "-raw_data.txt")
 
 print "opening", raw_data
 
+#TODO: do this first to cause errors before the user enters anything
 port = serInput.findPort()
 
 dataFile = open(raw_data, "a")
@@ -54,8 +55,7 @@ else:
 	print "using cached data"
 dataFile.close()
 
-#parserList = {"HTU"}
-'''
+parserList = {}
 for name, module in parsers.__dict__.iteritems():
 	if type(module) is types.ModuleType:
 		for name2, parser in module.__dict__.iteritems():
@@ -63,7 +63,7 @@ for name, module in parsers.__dict__.iteritems():
 				if name2 == "Parser":
 					print "adding parser:", name
 					parserList[name] = parser()
-'''
+
 # 	GPS example:
 #		#GPS:2136,12,37.462688,-122.274070,229.20,9,114
 #		$GPS:1651585,f:E6D91542,f:488CF4C2,f:00000041,f:00000043:#
@@ -71,7 +71,7 @@ for name, module in parsers.__dict__.iteritems():
 #	IMU example:
 #		#IMU:343808,25.31,-7,-7,-7,-55,118,29,956,0,16736:#
 
-#parsers.testParsers(parserList)
+parsers.testParsers(parserList)
 
 
 log = open(raw_data, "r")
@@ -96,14 +96,33 @@ csvpath = os.path.join(directory,  str(datetime.date.today()) + "-data.csv")
 #combined = open(csvpath, "w")
 #combined.write("Time(ms),temperature, humidity\n")
 
+csvdir = os.path.join(directory, "csv")
+
+
+if not os.path.exists(csvdir):
+	os.mkdir(csvdir)
+
+htu = open(csvdir+sensorNames[0]+".csv", "w")
+htu.write("Time,temperature (C),humidity\n")
+
+combined = open(csvdir+"combined.csv", "w")
+combined.write("Time(ms),temperature, humidity\n")
+
+if not os.path.exists(csvdir):
+	os.mkdir(csvdir)
+
 lastTemp = 0
 lastHumidity = 0
+
+startTime = datetime.datetime.now()
+lasttime = 0
  
 def logCombined():
 	combined.write(str(parser.millis) + "," + str(lastTemp) + "," + str(lastHumidity) + '\n')
 
+print "parsing"
 i=0
-'''
+
 for line in log.readlines():
 	line = line.strip()
 	i += 1
@@ -115,9 +134,7 @@ for line in log.readlines():
 				lastHumidity = parser.humidity
 				htu.write(str(parser))
 				logCombined()
-			else:
-				print "error parsing: " + line
-'''
+
 
 #time synchronization below:
 
