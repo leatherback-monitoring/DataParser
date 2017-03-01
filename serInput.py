@@ -25,10 +25,10 @@ def listSerialPorts():
 			s.close()
 			result.append(port)
 		except (OSError, serial.SerialException):
-			print "OSError"
+			#print "OSError"
 			pass
 
-	print "discovered ports:", ports, "possible ports:", result
+	print "discovering ports...", "possible ports:", result
 	return result
 
 class UnknownSerialPortException(Exception):
@@ -48,7 +48,8 @@ def findPort():
 	return
 
 def readInput(port, deleteData=True, ser_timeout=4):
-	if not os.path.exists(port):
+	#if not os.path.exists(port):
+	if False:
 		raise UnknownSerialPortException("Port " + port + " does not exist")
 	else:
 		# configure the serial connection

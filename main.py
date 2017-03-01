@@ -9,6 +9,8 @@ import os
 import sys
 #import struct
 import parsers
+import parsers.HTU
+#import numpy
 import pandas as pd
 import serInput
 import timeSync
@@ -96,20 +98,15 @@ csvpath = os.path.join(directory,  str(datetime.date.today()) + "-data.csv")
 #combined = open(csvpath, "w")
 #combined.write("Time(ms),temperature, humidity\n")
 
-csvdir = os.path.join(directory, "csv")
 
+#if not os.path.exists(csvpath):
+#	os.mkdir(csvpath)
 
-if not os.path.exists(csvdir):
-	os.mkdir(csvdir)
+#htu = open(csvdir+sensorNames[0]+".csv", "w")
+#htu.write("Time,temperature (C),humidity\n")
 
-htu = open(csvdir+sensorNames[0]+".csv", "w")
-htu.write("Time,temperature (C),humidity\n")
-
-combined = open(csvdir+"combined.csv", "w")
-combined.write("Time(ms),temperature, humidity\n")
-
-if not os.path.exists(csvdir):
-	os.mkdir(csvdir)
+combined = open(csvpath, "w")
+#combined.write("Time(ms),temperature, humidity\n")
 
 lastTemp = 0
 lastHumidity = 0
@@ -129,33 +126,39 @@ for line in log.readlines():
 	for name, parser in parserList.iteritems():    
 		if parser.parse(line):
 			if parser.type == "HTU":
-				print "logging"
+				#print "logging"
 				lastTemp = parser.temperature
 				lastHumidity = parser.humidity
-				htu.write(str(parser))
+				#htu.write(str(parser))
 				logCombined()
 
-
+combined.close()
 #time synchronization below:
 
-data = pd.read_csv(csvpath, names = ['time','temp','humidity'])
+data = pd.read_csv(str(csvpath), names = ['rawTime','temp','humidity'])
 
-#multiply to get time in seconds
-data['rawTime'] = data['time']*8
+if len(data) > 0:
+	#multiply to get time in seconds
+	data['rawTime'] = data['rawTime']*8
 
-timeSeries = list(data['rawTime'])
+	timeSeries = list(data['rawTime'])
 
-timeSync.checkResetOverflow(timeSeries)
+	timeSync.checkResetOverflow(timeSeries)
 
-#write data back into dataframe -- can be done better
-data['rawTime'] = timeSeries
+	#write data back into dataframe -- can be done better
+	data['rawTime'] = timeSeries
 
-timeSync.singleSync(data, 'rawTime')
+	timeSync.singleSync(data, 'rawTime')
 
 
-timeSync.DoubleSync(data, 'realtime - rawTime')
+	timeSync.DoubleSync(data, 'realtime - rawTime')
 
-#clean up the data with the raw output, temp, humidity, and synchronized time only.
-cleanData = data[['rawTime','temp','humidity','syncedTime']]
+	#clean up the data with the raw output, temp, humidity, and synchronized time only.
+	cleanData = data[['rawTime','temp','humidity','syncedTime']]
 
-pd.DataFrame.to_csv(cleanData,path_or_buf=csvpath)
+	pd.DataFrame.to_csv(cleanData,path_or_buf=csvpath)
+
+	print "Time synchronized. File saved to: " + csvpath
+else:
+	print "No data found. Try synching again or checking file contents manually."
+raw_input("press enter to exit.")

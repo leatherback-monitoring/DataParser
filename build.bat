@@ -1,0 +1,1 @@
+PyInstaller main.py --name TurtleSensor --icon turtle-icon.ico --exclude-module sqlite3 --exclude-module IPython --exclude-module tcl --exclude-module tk --exclude-module zmq --exclude-module jsonschema --clean
