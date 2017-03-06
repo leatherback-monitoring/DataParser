@@ -16,6 +16,7 @@ import serInput
 import timeSync
 import datetime
 import types
+import matplotlib
 #import json
 
 from operator import itemgetter
@@ -160,5 +161,5 @@ if len(data) > 0:
 
 	print "Time synchronized. File saved to: " + csvpath
 else:
-	print "No data found. Try synching again or checking file contents manually."
+	print "No data found. Try syncing again or checking file contents manually."
 raw_input("press enter to exit.")
