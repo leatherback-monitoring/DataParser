@@ -3,6 +3,8 @@
 import time, serial, glob, sys, os
 
 
+
+
 def listSerialPorts():
 
 	if sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):

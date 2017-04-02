@@ -44,7 +44,7 @@ if len(sys.argv) > 1:
 if not os.path.exists(directory):
 	os.makedirs(directory)
 
-raw_data = os.path.join(directory, str(datetime.date.today()) + "-raw_data.txt")
+raw_data = os.path.join(directory, "sensor_" + str(sensorID) + "-" + str(datetime.date.today()) + "-raw_data.txt")
 
 print "opening", raw_data
 
@@ -95,7 +95,7 @@ sensorNames = {
 	#uint16_t temp_Code = makeMeasurment(TEMP_MEASURE_NOHOLD);
 	#result = (175.25*temp_Code/65536)-46.85
 
-csvpath = os.path.join(directory,  str(datetime.date.today()) + "-data.csv")
+csvpath = os.path.join(directory, "sensor_" + str(sensorID) + "-" + str(datetime.date.today()) + "-data.csv")
 #combined = open(csvpath, "w")
 #combined.write("Time(ms),temperature, humidity\n")
 
@@ -108,6 +108,10 @@ csvpath = os.path.join(directory,  str(datetime.date.today()) + "-data.csv")
 
 combined = open(csvpath, "w")
 #combined.write("Time(ms),temperature, humidity\n")
+
+#seconds between each reading
+#225 seconds =  30 min
+measureInterval = 225
 
 lastTemp = 0
 lastHumidity = 0

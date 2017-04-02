@@ -7,23 +7,35 @@ import pandas as pd
 #import numpy.random as random
 import sys,os
 
+dateFormat = "%d/%m/%Y"
+
 def checkResetOverflow(timeSeries):
 	reset = False
+	outputTimes = []
 	resetRows = []
+	timeOffset = 0
 	for i in range(0,len(timeSeries)):
-			if i > 0:
-				if timeSeries[i] < timeSeries[i-1]:
-					#recursively edit overflow
-					timeSeries[i] = timeSeries[i-1] + 8
+		if i > 0:
+			if timeSeries[i] < timeSeries[i-1]:
+				print "less than"
+				#recursively edit overflow
+				#change to adding cumulatively
+				timeOffset = timeOffset + timeSeries[i-1]
+				#for debugging/logging
+				reset = True
+				resetRows.append(i)
+		outputTimes.append(timeSeries[i]+timeOffset)
+		"""
+					#print timeOffset
+					#timeSeries[i:] = timeSeries[i:]
 					#print timeSeries[i]
-					#for debugging/logging
-					reset = True
-					resetRows.append(i)
+					"""
 	if reset == True:
 		for i in range(0, len(resetRows)):
 			#check to see if reset is unique or is just a chain of reset/overflow
 			if resetRows[i] != resetRows[i-1] + 1:
 				print "edited due to overflow or reset at row " + str(resetRows[i])
+	return outputTimes
 
 def singleSync(dataframe, series):
 	#obtain how many seconds elapsed 
@@ -38,7 +50,7 @@ def singleSync(dataframe, series):
 	dataframe[columnName] = calculatedStartDate + timedeltas
 
 	#time string formatting
-	dataframe[columnName] = pd.to_datetime(pd.DatetimeIndex(dataframe[columnName]).strftime('%X %D'))
+	dataframe[columnName] = pd.to_datetime(pd.DatetimeIndex(dataframe[columnName])).strftime(dateFormat + " %X")
 	return dataframe
 '''
 #generate some noise
@@ -63,7 +75,7 @@ def getUserStartDate():
 		#userIn = raw_input("Type Date: mm/dd/yy: ")
 		userDateInput = raw_input("enter the day the sensor was turned on and placed in the nest as mm/dd/yyyy: ")
 		try:
-			date = datetime.strptime(userDateInput, "%m/%d/%Y")
+			date = datetime.strptime(userDateInput, dateFormat)
 			#date = datetime.date(year=date.year, month = date.month, day=date.day)
 		except ValueError as e:
 			print "Invalid Format: {0}".format(e)
@@ -127,7 +139,7 @@ def valiDate():
 		print "synchronizing time now..."
 		return userStartDateTime
 
-def DoubleSync(dataframe, series):
+def DoubleSync(dataframe, series,measureInterval):
 	columnName = str('doubleSyncRealTime - ' + series)
 	#if the user start date doesn't match the singleSync start date, do I adjust by taking the
 	#currentTime - userStartTime / number of readings (not preserving 8-sec logging) or by doing
@@ -136,6 +148,7 @@ def DoubleSync(dataframe, series):
 	#% will adjust syncing approach based on the percentage off the data is.
 	tolerance = .1
 	userStartDateTime = valiDate()
+	dataframe[series] = pd.to_datetime(dataframe[series])
 	timeElapsed = dataframe[series][len(dataframe[series])-1] - dataframe[series][0]
 	if userStartDateTime - dataframe[series][0] !=0:
 		percentOff = abs((userStartDateTime - dataframe[series][0])/(dataframe[series][len(dataframe[series])-1] - dataframe[series][0]))
@@ -143,14 +156,17 @@ def DoubleSync(dataframe, series):
 		#print str(percentOff) + " percent off"
 		if percentOff > tolerance:
 			#userStartTime + 8n
-			dataframe['syncedTime'] = pd.date_range(freq=pd.DateOffset(seconds=8),start=userStartDateTime,periods=len(dataframe[series]))
+			dataframe['syncedTime'] = pd.date_range(freq=pd.DateOffset(seconds=measureInterval),start=userStartDateTime,periods=len(dataframe[series]))
 			#for i in range(0, len(dataframe[series])-1):
 			   # print userStartDateTime + timedelta(seconds=8*i)
 				#dataframe['doublesync'].append(userStartDateTime + timedelta(0,0, 8*i ))
+			dataframe['syncedTime'].map(lambda t: t.strftime('%m-%d'))
 		elif percentOff < tolerance:
 			#print "wow, you're actually pretty accurate"
 			#interval = 8 seconds +/- some number of microseconds
 			interval = (dataframe[series][len(dataframe[series])-1] - userStartDateTime)/(len(dataframe[series]) - 1)
 			print str(interval) + "seconds"
 			dataframe['syncedTime'] = pd.date_range(start=userStartDateTime, periods= len(dataframe[series]), freq=pd.DateOffset(seconds=interval.seconds, microseconds=interval.microseconds))
-			
+		#whatever works
+		dataframe['syncedTime'] = pd.to_datetime(pd.DatetimeIndex(dataframe['syncedTime'])).strftime(dateFormat + " %X")
+		dataframe[series] = pd.to_datetime(pd.DatetimeIndex(dataframe[series])).strftime(dateFormat + " %X")
