@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
 
 #adapted from https://github.com/widakay/QuadcopterDataParser
 
@@ -140,7 +140,8 @@ for line in log.readlines():
 combined.close()
 #time synchronization below:
 
-data = pd.read_csv(str(csvpath), names = ['rawTime','temp','humidity'])
+rawHeaders = ['rawTime','temp (°C)','humidity (%RH)']
+data = pd.read_csv(str(csvpath), names = rawHeaders)
 
 if len(data) > 0:
 	#multiply to get time in seconds
@@ -148,22 +149,28 @@ if len(data) > 0:
 
 	timeSeries = list(data['rawTime'])
 
-	timeSync.checkResetOverflow(timeSeries)
-
-	#write data back into dataframe -- can be done better
-	data['rawTime'] = timeSeries
+	data['rawTime'] = timeSync.checkResetOverflow(timeSeries)
 
 	timeSync.singleSync(data, 'rawTime')
 
-
-	timeSync.DoubleSync(data, 'realtime - rawTime')
+	timeSync.DoubleSync(data, 'realtime - rawTime',1800)
 
 	#clean up the data with the raw output, temp, humidity, and synchronized time only.
-	cleanData = data[['rawTime','temp','humidity','syncedTime']]
+	cleanData = data[rawHeaders + ['syncedTime']]
 
-	pd.DataFrame.to_csv(cleanData,path_or_buf=csvpath)
+	pd.DataFrame.to_csv(cleanData, path_or_buf=csvpath)
 
 	print "Time synchronized. File saved to: " + csvpath
+
+	deleteQuery = timeSync.query_yes_no("Delete data off sensor?")
+	if deleteQuery == True:
+		deleteConfirm = timeSync.query_yes_no("Are you sure?")
+		if deleteConfirm == True:
+			if port:
+				dataFile.write(serInput.readInput(port, deleteData=True))
+			else:
+				print "Deleting cached data off sensor..."
+			dataFile.close()
 else:
 	print "No data found. Try syncing again or checking file contents manually."
 raw_input("press enter to exit.")

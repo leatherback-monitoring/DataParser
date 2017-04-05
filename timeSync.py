@@ -72,8 +72,7 @@ singleSync('noisytime')
 '''
 def getUserStartDate():
 	while True:
-		#userIn = raw_input("Type Date: mm/dd/yy: ")
-		userDateInput = raw_input("enter the day the sensor was turned on and placed in the nest as mm/dd/yyyy: ")
+		userDateInput = raw_input("enter the day the sensor was turned on and placed in the nest as dd/mm/yyyy: ")
 		try:
 			date = datetime.strptime(userDateInput, dateFormat)
 			#date = datetime.date(year=date.year, month = date.month, day=date.day)
@@ -130,8 +129,8 @@ def query_yes_no(question, default="yes"):
 def valiDate():
 	date = getUserStartDate()
 	time = getUserStartTime()
-	userStartDateTime = datetime(year=date.year, month=date.month, day=date.day, hour=time.hour, minute= time.minute, second=0)
-	print "your date is: " + str(userStartDateTime)
+	userStartDateTime = datetime( day=date.day, month=date.month, year=date.year, hour=time.hour, minute= time.minute, second=0)
+	print "your date is: " + str(userStartDateTime.strftime(dateFormat + " %X"))
 	userVerify = query_yes_no("is this correct? ")
 	if userVerify == False:
 		valiDate()
