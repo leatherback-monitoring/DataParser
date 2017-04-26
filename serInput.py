@@ -49,7 +49,7 @@ def findPort():
 		return port
 	return
 
-def readInput(port, deleteData=True, ser_timeout=4):
+def readInput(port, deleteData, ser_timeout=4):
 	#if not os.path.exists(port):
 	if False:
 		raise UnknownSerialPortException("Port " + port + " does not exist")
@@ -74,7 +74,12 @@ def readInput(port, deleteData=True, ser_timeout=4):
 
 		ser.flush()
 
- 		
+		if deleteData==True:
+			print "Erasing data on device..."
+			ser.write("e")
+			print "Done."
+ 			return
+
 		end = time.time() + ser_timeout
 		print "reading data...."
 		
@@ -93,11 +98,6 @@ def readInput(port, deleteData=True, ser_timeout=4):
 		print "-"*10 + " Data " + "-"*10
 		print data
 		print "-"*27
-
-		if deleteData:
-			print "Erasing data on device..."
-			ser.write("e")
-			print "Done."
 
 		ser.close()
 		return data

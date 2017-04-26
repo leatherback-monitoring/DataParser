@@ -167,9 +167,10 @@ if len(data) > 0:
 		deleteConfirm = timeSync.query_yes_no("Are you sure?")
 		if deleteConfirm == True:
 			if port:
-				dataFile.write(serInput.readInput(port, deleteData=True))
+				serInput.readInput(port, deleteData=True)
 			else:
-				print "Deleting cached data off sensor..."
+				print "no port found!"
+				#delete cached data locally? probably not: print "Deleting cached data off sensor..."
 			dataFile.close()
 else:
 	print "No data found. Try syncing again or checking file contents manually."
