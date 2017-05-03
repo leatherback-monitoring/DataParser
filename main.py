@@ -35,7 +35,7 @@ def getSensorID():
 		return sensorID
 
 sensorID = getSensorID()
-directory = os.path.join(os.path.expanduser('~\Documents'),  "turtleSensorData", "sensors", str(sensorID)) #+ "/"  + str(int(time.time()))
+directory = os.path.join(os.path.expanduser('~'),'Documents',  "turtleSensorData", "sensors", str(sensorID)) #+ "/"  + str(int(time.time()))
 
 
 if len(sys.argv) > 1:
