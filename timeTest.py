@@ -12,8 +12,6 @@ if len(data) > 0:
 
 	data['rawTime'] = timeSync.checkResetOverflow(timeSeries)
 
-	timeSync.singleSync(data, 'rawTime')
-
-	timeSync.DoubleSync(data, 'realtime - rawTime',1800)
+	timeSync.sync(data, 'rawTime',1800)
 
 	pd.DataFrame.to_csv(data,path_or_buf=csvpath+"-clean.csv")

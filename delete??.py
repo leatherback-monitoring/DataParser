@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import time, serial, glob, sys, os
 
 
@@ -49,8 +47,9 @@ def findPort():
 		return port
 	return
 
-def readInput(port, deleteData, ser_timeout=4):
-	#if not os.path.exists(port):
+
+def serInput():
+	port = findPort()
 	if False:
 		raise UnknownSerialPortException("Port " + port + " does not exist")
 	else:
@@ -72,34 +71,11 @@ def readInput(port, deleteData, ser_timeout=4):
 			print "Opening port..."
 			ser.open()
 
+		print "Erasing data on device..."
+		ser.write("e")
+		print "Done."
 		
+		ser.flush()
 
-		if deleteData==True:
-			print "Erasing data on device..."
-			ser.write("e")
-			print "Done."
- 			return
- 		
- 		ser.flush()
 
-		end = time.time() + ser_timeout
-		print "reading data...."
-		
-		data = ""
-		# Continuously read data until sensor has not replied for 4 seconds
-		while time.time() < end:
-			while ser.inWaiting():
-				waiting = ser.inWaiting()
-				data += ser.read(waiting)
-				print 'Receieved \t' + str(waiting) + " bytes"
-				if "Waiting" in data[-waiting:]:
-					ser.write("r")
-					print "Sensor booted. Fetching data..."
-				end = time.time() + ser_timeout
-			time.sleep(0.5)
-		print "-"*10 + " Data " + "-"*10
-		print data
-		print "-"*27
-
-		ser.close()
-		return data
+serInput()

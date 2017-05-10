@@ -3,7 +3,6 @@
 
 #adapted from https://github.com/widakay/QuadcopterDataParser
 
-
 import time
 import os
 import sys
@@ -109,9 +108,6 @@ csvpath = os.path.join(directory, "sensor_" + str(sensorID) + "-" + str(datetime
 combined = open(csvpath, "w")
 #combined.write("Time(ms),temperature, humidity\n")
 
-#seconds between each reading
-#225 seconds =  30 min
-measureInterval = 225
 
 lastTemp = 0
 lastHumidity = 0
@@ -167,7 +163,7 @@ if len(data) > 0:
 		deleteConfirm = timeSync.query_yes_no("Are you sure?")
 		if deleteConfirm == True:
 			if port:
-				serInput.readInput(port, deleteData=True)
+				dataFile.write(serInput.readInput(port, deleteData=True))
 			else:
 				print "no port found!"
 				#delete cached data locally? probably not: print "Deleting cached data off sensor..."
