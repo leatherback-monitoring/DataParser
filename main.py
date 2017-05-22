@@ -37,7 +37,6 @@ def getSensorID():
 sensorID = getSensorID()
 directory = os.path.join(os.path.expanduser('~'),'Documents',  "turtleSensorData", "sensors", str(sensorID)) #+ "/"  + str(int(time.time()))
 
-
 if len(sys.argv) > 1:
 	directory = sys.argv[1]
 
@@ -75,7 +74,6 @@ for name, module in parsers.__dict__.iteritems():
 #		#IMU:343808,25.31,-7,-7,-7,-55,118,29,956,0,16736:#
 
 parsers.testParsers(parserList)
-
 
 log = open(raw_data, "r")
 fileshort = raw_data[:raw_data.find(".txt")]

@@ -37,12 +37,49 @@ def checkResetOverflow(timeSeries):
 				print "edited due to overflow or reset at row " + str(resetRows[i])
 	return outputTimes
 
+def DoubleSync(dataframe, series,measureInterval):
+	columnName = str('doubleSyncRealTime - ' + series)
+	#if the user start date doesn't match the singleSync start date, do I adjust by taking the
+	#currentTime - userStartTime / number of readings (not preserving 8-sec logging) or by doing
+	#userStartTime + 8n?
+
+	#% will adjust syncing approach based on the percentage off the data is.
+	tolerance = .1
+	userStartDateTime = valiDate()
+	print userStartDateTime
+	dataframe[series] = pd.to_datetime(dataframe[series])
+	timeElapsed = dataframe[series].iloc[-1] - dataframe[series][0]
+	print timeElapsed
+	error = abs(userStartDateTime - dataframe[series][0])
+	if userStartDateTime - dataframe[series][0] !=0:
+		percentOff = error/timeElapsed
+		print "user: " + str(userStartDateTime), "first row: " + str(dataframe[series][0])
+		print str(error) + " off"
+
+		#print str(percentOff) + " percent off"
+		if percentOff > tolerance:
+			#userStartTime + 8n
+			dataframe['syncedTime'] = pd.date_range(freq=pd.DateOffset(seconds=measureInterval),start=userStartDateTime,periods=len(dataframe[series]))
+			#for i in range(0, len(dataframe[series])-1):
+			   # print userStartDateTime + timedelta(seconds=8*i)
+				#dataframe['doublesync'].append(userStartDateTime + timedelta(0,0, 8*i ))
+			dataframe['syncedTime'].map(lambda t: t.strftime('%d-%m'))
+		elif percentOff < tolerance:
+			#print "wow, you're actually pretty accurate"
+			#interval = 8 seconds +/- some number of microseconds
+			interval = (timeElapsed)/(len(dataframe[series]) - 1)
+			print "adjusting measure interval to " + str(interval)
+			dataframe['syncedTime'] = pd.date_range(start=userStartDateTime, periods= len(dataframe[series]), freq=pd.DateOffset(seconds=interval.seconds, microseconds=interval.microseconds))
+		#whatever works
+		dataframe['syncedTime'] = pd.to_datetime(pd.DatetimeIndex(dataframe['syncedTime'])).strftime(dateFormat + " %X")
+		dataframe[series] = pd.to_datetime(pd.DatetimeIndex(dataframe[series])).strftime(dateFormat + " %X")
+
 def singleSync(dataframe, series):
 	#obtain how many seconds elapsed 
 	#print len(dataframe)
-	lastReading = dataframe[series][len(dataframe)-1]
+	lastReading = dataframe[series].iloc[-1]
 	#print lastReading
-	calculatedStartDate = datetime.now()- timedelta(seconds=int(lastReading))
+	calculatedStartDate = (datetime.now()- timedelta(seconds=int(lastReading)))
 	#load times as timedelta
 	timedeltas = pd.to_timedelta(dataframe[series],unit='s')
 	columnName = str('realtime - ' + series)
@@ -50,8 +87,13 @@ def singleSync(dataframe, series):
 	dataframe[columnName] = calculatedStartDate + timedeltas
 
 	#time string formatting
-	dataframe[columnName] = pd.to_datetime(pd.DatetimeIndex(dataframe[columnName])).strftime(dateFormat + " %X")
-	return dataframe
+	dataframe[columnName] = pd.to_datetime(pd.DatetimeIndex(dataframe[columnName])).strftime(dateFormat + " %X")	
+	print "According to our calculations, the sensor started at: " + dataframe[columnName][0]
+	acceptSingleSync = query_yes_no("use this as the start date? ")
+	if acceptSingleSync == True:
+		return dataframe
+	elif acceptSingleSync == False:
+		DoubleSync(dataframe, 'realtime - rawTime',1800)
 '''
 #generate some noise
 def noise():
@@ -75,6 +117,7 @@ def getUserStartDate():
 		userDateInput = raw_input("enter the day the sensor was turned on and placed in the nest as dd/mm/yyyy: ")
 		try:
 			date = datetime.strptime(userDateInput, dateFormat)
+			print date
 			#date = datetime.date(year=date.year, month = date.month, day=date.day)
 		except ValueError as e:
 			print "Invalid Format: {0}".format(e)
@@ -138,34 +181,3 @@ def valiDate():
 		print "synchronizing time now..."
 		return userStartDateTime
 
-def DoubleSync(dataframe, series,measureInterval):
-	columnName = str('doubleSyncRealTime - ' + series)
-	#if the user start date doesn't match the singleSync start date, do I adjust by taking the
-	#currentTime - userStartTime / number of readings (not preserving 8-sec logging) or by doing
-	#userStartTime + 8n?
-
-	#% will adjust syncing approach based on the percentage off the data is.
-	tolerance = .1
-	userStartDateTime = valiDate()
-	dataframe[series] = pd.to_datetime(dataframe[series])
-	timeElapsed = dataframe[series][len(dataframe[series])-1] - dataframe[series][0]
-	if userStartDateTime - dataframe[series][0] !=0:
-		percentOff = abs((userStartDateTime - dataframe[series][0])/(dataframe[series][len(dataframe[series])-1] - dataframe[series][0]))
-		print str(userStartDateTime - dataframe[series][0]) + " off"
-		#print str(percentOff) + " percent off"
-		if percentOff > tolerance:
-			#userStartTime + 8n
-			dataframe['syncedTime'] = pd.date_range(freq=pd.DateOffset(seconds=measureInterval),start=userStartDateTime,periods=len(dataframe[series]))
-			#for i in range(0, len(dataframe[series])-1):
-			   # print userStartDateTime + timedelta(seconds=8*i)
-				#dataframe['doublesync'].append(userStartDateTime + timedelta(0,0, 8*i ))
-			dataframe['syncedTime'].map(lambda t: t.strftime('%m-%d'))
-		elif percentOff < tolerance:
-			#print "wow, you're actually pretty accurate"
-			#interval = 8 seconds +/- some number of microseconds
-			interval = (dataframe[series][len(dataframe[series])-1] - userStartDateTime)/(len(dataframe[series]) - 1)
-			print str(interval) + "seconds"
-			dataframe['syncedTime'] = pd.date_range(start=userStartDateTime, periods= len(dataframe[series]), freq=pd.DateOffset(seconds=interval.seconds, microseconds=interval.microseconds))
-		#whatever works
-		dataframe['syncedTime'] = pd.to_datetime(pd.DatetimeIndex(dataframe['syncedTime'])).strftime(dateFormat + " %X")
-		dataframe[series] = pd.to_datetime(pd.DatetimeIndex(dataframe[series])).strftime(dateFormat + " %X")

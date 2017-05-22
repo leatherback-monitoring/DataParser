@@ -14,6 +14,4 @@ if len(data) > 0:
 
 	timeSync.singleSync(data, 'rawTime')
 
-	timeSync.DoubleSync(data, 'realtime - rawTime',1800)
-
 	pd.DataFrame.to_csv(data,path_or_buf=csvpath+"-clean.csv")
