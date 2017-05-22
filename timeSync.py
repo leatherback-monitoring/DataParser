@@ -37,7 +37,7 @@ def checkResetOverflow(timeSeries):
 				print "edited due to overflow or reset at row " + str(resetRows[i])
 	return outputTimes
 
-def DoubleSync(dataframe, series,measureInterval):
+def DoubleSync(dataframe, series):
 	columnName = str('doubleSyncRealTime - ' + series)
 	#if the user start date doesn't match the singleSync start date, do I adjust by taking the
 	#currentTime - userStartTime / number of readings (not preserving 8-sec logging) or by doing
@@ -46,11 +46,13 @@ def DoubleSync(dataframe, series,measureInterval):
 	#% will adjust syncing approach based on the percentage off the data is.
 	tolerance = .1
 	userStartDateTime = valiDate()
-	print userStartDateTime
 	dataframe[series] = pd.to_datetime(dataframe[series])
+	#ye olde constants
 	timeElapsed = dataframe[series].iloc[-1] - dataframe[series][0]
-	print timeElapsed
 	error = abs(userStartDateTime - dataframe[series][0])
+	#this is a pretty unsophisticated wayt to track measure interval, consider revising
+	measureInterval = dataframe[series][1] - dataframe[series][0]
+	print measureInterval
 	if userStartDateTime - dataframe[series][0] !=0:
 		percentOff = error/timeElapsed
 		print "user: " + str(userStartDateTime), "first row: " + str(dataframe[series][0])
@@ -67,9 +69,9 @@ def DoubleSync(dataframe, series,measureInterval):
 		elif percentOff < tolerance:
 			#print "wow, you're actually pretty accurate"
 			#interval = 8 seconds +/- some number of microseconds
-			interval = (timeElapsed)/(len(dataframe[series]) - 1)
+			interval = (dataframe[series].iloc[-1] - userStartDateTime)/(len(dataframe[series]) - 1)
 			print "adjusting measure interval to " + str(interval)
-			dataframe['syncedTime'] = pd.date_range(start=userStartDateTime, periods= len(dataframe[series]), freq=pd.DateOffset(seconds=interval.seconds, microseconds=interval.microseconds))
+			dataframe['syncedTime'] = pd.date_range(start=userStartDateTime, periods=len(dataframe[series]), freq=pd.DateOffset(seconds=interval.seconds, microseconds=interval.microseconds))
 		#whatever works
 		dataframe['syncedTime'] = pd.to_datetime(pd.DatetimeIndex(dataframe['syncedTime'])).strftime(dateFormat + " %X")
 		dataframe[series] = pd.to_datetime(pd.DatetimeIndex(dataframe[series])).strftime(dateFormat + " %X")
@@ -93,7 +95,7 @@ def singleSync(dataframe, series):
 	if acceptSingleSync == True:
 		return dataframe
 	elif acceptSingleSync == False:
-		DoubleSync(dataframe, 'realtime - rawTime',1800)
+		DoubleSync(dataframe, 'realtime - rawTime')
 '''
 #generate some noise
 def noise():
