@@ -20,7 +20,7 @@ def checkResetOverflow(timeSeries):
 				print "less than"
 				#recursively edit overflow
 				#change to adding cumulatively
-				timeOffset = timeOffset + timeSeries[i-1]
+				timeOffset = timeOffset + timeSeries[i-1] + (timeSeries[i-1] - timeSeries[i-2])
 				#for debugging/logging
 				reset = True
 				resetRows.append(i)
@@ -51,7 +51,9 @@ def DoubleSync(dataframe, series):
 	timeElapsed = dataframe[series].iloc[-1] - dataframe[series][0]
 	error = abs(userStartDateTime - dataframe[series][0])
 	#this is a pretty unsophisticated wayt to track measure interval, consider revising
-	measureInterval = dataframe[series][1] - dataframe[series][0]
+	measureInterval = timedelta.total_seconds(dataframe[series][1] - dataframe[series][0])
+	pd.options.display.max_rows = 900
+	print dataframe[series][1:].diff().mean()
 	print measureInterval
 	if userStartDateTime - dataframe[series][0] !=0:
 		percentOff = error/timeElapsed
